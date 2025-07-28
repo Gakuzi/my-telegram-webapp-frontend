@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Telegram Web App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            box-sizing: border-box; /* Для корректной работы padding/border */
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%; /* Адаптивный дизайн */
+            max-width: 400px; /* Максимальная ширина */
+        }
+        button {
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            width: 100%; /* Полная ширина кнопки */
+        }
+        button:hover {
+            background-color: #007bb5;
+        }
+        input {
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: calc(100% - 18px); /* Учитываем padding и border */
+            max-width: 300px;
+        }
+        p {
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Привет из Web App!</h1>
+        <p>Введите что-нибудь и нажмите "Отправить в Telegram":</p>
+        <input type="text" id="messageInput" placeholder="Ваше сообщение">
+        <button onclick="sendDataToTelegram()">Отправить в Telegram</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        // Проверяем, что Telegram Web App API доступен
+        if (window.Telegram && window.Telegram.WebApp) {
+            Telegram.WebApp.ready(); // Сообщаем Telegram, что Web App загружено
+
+            // Пример: получаем данные пользователя из initData (если доступны)
+            const user = Telegram.WebApp.initDataUnsafe?.user;
+            if (user) {
+                document.getElementById('status').innerText = `Привет, ${user.first_name || 'друг'}!`;
+            } else {
+                document.getElementById('status').innerText = 'Добро пожаловать в Web App!';
+            }
+            // Включаем кнопку закрытия Web App, если она нужна
+            // Telegram.WebApp.MainButton.setText('Закрыть Web App');
+            // Telegram.WebApp.MainButton.onClick(Telegram.WebApp.close);
+            // Telegram.WebApp.MainButton.show();
+
+        } else {
+            document.getElementById('status').innerText = 'Это Web App должно быть запущено в Telegram для полной функциональности.';
+            console.warn('Telegram Web App API не доступен. Запустите Web App в Telegram.');
+        }
+
+        // Функция для отправки данных обратно в Telegram
+        function sendDataToTelegram() {
+            const message = document.getElementById('messageInput').value;
+            if (!message) {
+                alert('Пожалуйста, введите сообщение.');
+                return;
+            }
+
+            if (window.Telegram && window.Telegram.WebApp) {
+                // Telegram.WebApp.sendData() отправляет строку обратно боту.
+                // Бот получит это как web_app_data в своем объекте сообщения.
+                Telegram.WebApp.sendData(message);
+                // Закрываем Web App после отправки данных.
+                Telegram.WebApp.close(); 
+            } else {
+                document.getElementById('status').innerText = `Сообщение "${message}" не может быть отправлено в Telegram (Web App API не доступен).`;
+            }
+        }
+    </script>
+</body>
+</html>
