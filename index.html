@@ -3,107 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой Telegram Web App</title>
+    <title>AI Чат Бот</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-end; /* Выравнивание к низу для чата */
             min-height: 100vh;
             margin: 0;
-            background-color: #f0f2f5;
+            background-color: #e5e5e5;
             color: #333;
-            box-sizing: border-box; /* Для корректной работы padding/border */
+            box-sizing: border-box;
+            padding: 10px;
         }
-        .container {
+        .chat-container {
             background-color: #fff;
-            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%; /* Адаптивный дизайн */
-            max-width: 400px; /* Максимальная ширина */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            height: 80vh; /* Высота контейнера чата */
+            overflow: hidden;
         }
-        button {
+        .messages {
+            flex-grow: 1; /* Занимает все доступное пространство */
+            padding: 15px;
+            overflow-y: auto; /* Прокрутка сообщений */
+            border-bottom: 1px solid #eee;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #dcf8c6; /* Светло-зеленый */
+            align-self: flex-end; /* Сообщение пользователя справа */
+            margin-left: auto;
+        }
+        .ai-message {
+            background-color: #f0f0f0; /* Светло-серый */
+            align-self: flex-start; /* Сообщение AI слева */
+            margin-right: auto;
+        }
+        .input-area {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #eee;
+        }
+        .input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        .input-area button {
             background-color: #0088cc;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 10px 15px;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 15px;
-            width: 100%; /* Полная ширина кнопки */
+            white-space: nowrap; /* Не переносить текст кнопки */
         }
-        button:hover {
+        .input-area button:hover {
             background-color: #007bb5;
         }
-        input {
-            padding: 8px;
-            margin-top: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: calc(100% - 18px); /* Учитываем padding и border */
-            max-width: 300px;
-        }
-        p {
-            margin-top: 20px;
-            font-size: 1.1em;
+        .loading-indicator {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: #888;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Привет из Web App!</h1>
-        <p>Введите что-нибудь и нажмите "Отправить в Telegram":</p>
-        <input type="text" id="messageInput" placeholder="Ваше сообщение">
-        <button onclick="sendDataToTelegram()">Отправить в Telegram</button>
-        <p id="status"></p>
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            </div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Спросите что-нибудь у AI...">
+            <button onclick="sendMessage()">Отправить</button>
+        </div>
     </div>
 
     <script>
-        // Проверяем, что Telegram Web App API доступен
+        // !!! АКТУАЛЬНЫЙ URL ВАШЕГО REPLIT БЭКЕНДА !!!
+        const REPLIT_BACKEND_URL = 'https://cfc67db3-9fb5-4928-8c1f-c3f6fb052f3b-00-5oewb6944gvy.worf.replit.dev/'; // <-- ОБНОВЛЕНО НА ВАШ НОВЫЙ URL
+
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+
+        // Инициализация Telegram Web App
         if (window.Telegram && window.Telegram.WebApp) {
-            Telegram.WebApp.ready(); // Сообщаем Telegram, что Web App загружено
-
-            // Пример: получаем данные пользователя из initData (если доступны)
-            const user = Telegram.WebApp.initDataUnsafe?.user;
-            if (user) {
-                document.getElementById('status').innerText = `Привет, ${user.first_name || 'друг'}!`;
-            } else {
-                document.getElementById('status').innerText = 'Добро пожаловать в Web App!';
-            }
-            // Включаем кнопку закрытия Web App, если она нужна
-            // Telegram.WebApp.MainButton.setText('Закрыть Web App');
-            // Telegram.WebApp.MainButton.onClick(Telegram.WebApp.close);
-            // Telegram.WebApp.MainButton.show();
-
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand(); // Разворачиваем Web App на весь экран
         } else {
-            document.getElementById('status').innerText = 'Это Web App должно быть запущено в Telegram для полной функциональности.';
+            addMessage('Это Web App должно быть запущено в Telegram для полной функциональности.', 'ai');
             console.warn('Telegram Web App API не доступен. Запустите Web App в Telegram.');
         }
 
-        // Функция для отправки данных обратно в Telegram
-        function sendDataToTelegram() {
-            const message = document.getElementById('messageInput').value;
-            if (!message) {
-                alert('Пожалуйста, введите сообщение.');
-                return;
-            }
+        // Функция для добавления сообщений в чат
+        function addMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', `${sender}-message`);
+            messageElement.innerText = text;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Прокрутка вниз
+        }
 
-            if (window.Telegram && window.Telegram.WebApp) {
-                // Telegram.WebApp.sendData() отправляет строку обратно боту.
-                // Бот получит это как web_app_data в своем объекте сообщения.
-                Telegram.WebApp.sendData(message);
-                // Закрываем Web App после отправки данных.
-                Telegram.WebApp.close(); 
-            } else {
-                document.getElementById('status').innerText = `Сообщение "${message}" не может быть отправлено в Telegram (Web App API не доступен).`;
+        // Обработчик нажатия Enter в поле ввода
+        messageInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Функция для отправки сообщения AI
+        async function sendMessage() {
+            const userMessage = messageInput.value.trim();
+            if (!userMessage) return;
+
+            addMessage(userMessage, 'user');
+            messageInput.value = ''; // Очищаем поле ввода
+            messageInput.disabled = true; // Отключаем ввод на время запроса
+            const sendButton = document.querySelector('.input-area button');
+            sendButton.disabled = true;
+
+            addMessage('AI печатает...', 'loading-indicator'); // Индикатор загрузки
+
+            try {
+                const response = await fetch(`${REPLIT_BACKEND_URL}generateContent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt: userMessage })
+                });
+
+                const data = await response.json();
+
+                // Удаляем индикатор загрузки
+                const loadingIndicator = messagesDiv.querySelector('.loading-indicator');
+                if (loadingIndicator) {
+                    loadingIndicator.remove();
+                }
+
+                if (data.success) {
+                    addMessage(data.generatedText, 'ai');
+                } else {
+                    addMessage(`Ошибка AI: ${data.message || 'Неизвестная ошибка'}`, 'ai');
+                }
+            } catch (error) {
+                console.error('Ошибка при запросе к бэкенду:', error);
+                // Удаляем индикатор загрузки
+                const loadingIndicator = messagesDiv.querySelector('.loading-indicator');
+                if (loadingIndicator) {
+                    loadingIndicator.remove();
+                }
+                addMessage(`Произошла ошибка при общении с AI. Пожалуйста, попробуйте еще раз.`, 'ai');
+            } finally {
+                messageInput.disabled = false; // Включаем ввод
+                sendButton.disabled = false;
+                messageInput.focus(); // Возвращаем фокус на поле ввода
             }
         }
+
+        // Приветственное сообщение от AI при загрузке Web App
+        addMessage('Привет! Я AI-помощник. Задайте мне вопрос.', 'ai');
     </script>
 </body>
 </html>
