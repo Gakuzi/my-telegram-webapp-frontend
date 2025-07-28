@@ -5,85 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Чат Бот</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #0088cc;
+            --primary-dark-color: #007bb5;
+            --bg-color: #f0f2f5;
+            --chat-bg-color: #ffffff;
+            --user-bubble-color: #dcf8c6;
+            --ai-bubble-color: #e0e0e0;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --input-bg-color: #f9f9f9;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-end; /* Выравнивание к низу для чата */
+            justify-content: flex-end;
             min-height: 100vh;
             margin: 0;
-            background-color: #e5e5e5;
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             box-sizing: border-box;
             padding: 10px;
+            overflow: hidden; /* Prevent body scroll, chat-container will scroll */
         }
         .chat-container {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 95%;
-            max-width: 600px;
+            background-color: var(--chat-bg-color);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px var(--shadow-color);
+            width: 98%; /* Немного шире для лучшего вида на мобильных */
+            max-width: 650px; /* Увеличили макс. ширину */
             display: flex;
             flex-direction: column;
-            height: 80vh; /* Высота контейнера чата */
+            height: 95vh; /* Почти на весь экран */
             overflow: hidden;
         }
         .messages {
-            flex-grow: 1; /* Занимает все доступное пространство */
+            flex-grow: 1;
             padding: 15px;
-            overflow-y: auto; /* Прокрутка сообщений */
-            border-bottom: 1px solid #eee;
+            overflow-y: auto;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
         }
         .message {
             margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 15px;
-            max-width: 80%;
+            padding: 12px 16px; /* Увеличили паддинги */
+            border-radius: 20px; /* Более круглые углы */
+            max-width: 85%; /* Чуть больше */
             word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.5;
         }
         .user-message {
-            background-color: #dcf8c6; /* Светло-зеленый */
-            align-self: flex-end; /* Сообщение пользователя справа */
+            background-color: var(--user-bubble-color);
+            align-self: flex-end;
             margin-left: auto;
+            border-bottom-right-radius: 5px; /* Для "хвостика" */
         }
         .ai-message {
-            background-color: #f0f0f0; /* Светло-серый */
-            align-self: flex-start; /* Сообщение AI слева */
+            background-color: var(--ai-bubble-color);
+            align-self: flex-start;
             margin-right: auto;
+            border-bottom-left-radius: 5px; /* Для "хвостика" */
         }
         .input-area {
             display: flex;
+            align-items: center; /* Выравнивание элементов по центру */
             padding: 10px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--input-bg-color);
         }
-        .input-area input {
+        .input-area input[type="text"] {
             flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
+            padding: 12px 18px; /* Увеличили паддинги */
+            border: 1px solid var(--border-color);
+            border-radius: 25px; /* Более круглые */
             margin-right: 10px;
             font-size: 16px;
+            background-color: var(--chat-bg-color);
+            transition: border-color 0.3s;
+        }
+        .input-area input[type="text"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
         }
         .input-area button {
-            background-color: #0088cc;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 20px;
+            padding: 12px 20px; /* Увеличили паддинги */
+            border-radius: 25px; /* Более круглые */
             cursor: pointer;
             font-size: 16px;
-            white-space: nowrap; /* Не переносить текст кнопки */
+            white-space: nowrap;
+            transition: background-color 0.3s;
+            margin-left: 5px; /* Отступ от file input */
         }
         .input-area button:hover {
-            background-color: #007bb5;
+            background-color: var(--primary-dark-color);
+        }
+        .input-area input[type="file"] {
+            display: none; /* Скрываем стандартный инпут файла */
+        }
+        .file-upload-label {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 25px;
+            padding: 12px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .file-upload-label:hover {
+            background-color: var(--primary-dark-color);
+        }
+        .file-upload-label svg {
+            margin-right: 5px;
         }
         .loading-indicator {
             text-align: center;
             padding: 10px;
             font-style: italic;
             color: #888;
+            font-size: 14px;
+        }
+        .uploaded-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -92,6 +151,11 @@
         <div class="messages" id="messages">
             </div>
         <div class="input-area">
+            <input type="file" id="fileInput" accept="image/*">
+            <label for="fileInput" class="file-upload-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                Файл
+            </label>
             <input type="text" id="messageInput" placeholder="Спросите что-нибудь у AI...">
             <button onclick="sendMessage()">Отправить</button>
         </div>
@@ -99,10 +163,15 @@
 
     <script>
         // !!! АКТУАЛЬНЫЙ URL ВАШЕГО REPLIT БЭКЕНДА !!!
-        const REPLIT_BACKEND_URL = 'https://cfc67db3-9fb5-4928-8c1f-c3f6fb052f3b-00-5oewb6944gvy.worf.replit.dev/'; // <-- ОБНОВЛЕНО НА ВАШ НОВЫЙ URL
+        // Скопируйте его из консоли Replit, это будет что-то вроде:
+        // 'https://cfc67db3-9fb5-4928-8c1f-c3f6fb052f3b-00-5oewb6944gvy.worf.replit.dev/'
+        const REPLIT_BACKEND_URL = 'https://cfc67db3-9fb5-4928-8c1f-c3f6fb052f3b-00-5oewb6944gvy.worf.replit.dev/'; // <-- ОБНОВИТЕ ЭТОТ URL
 
         const messagesDiv = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
+        const fileInput = document.getElementById('fileInput');
+        let selectedFileBase64 = null; // Для хранения base64 файла
+        let selectedFileMimeType = null; // Для хранения MIME-типа файла
 
         // Инициализация Telegram Web App
         if (window.Telegram && window.Telegram.WebApp) {
@@ -112,6 +181,45 @@
             addMessage('Это Web App должно быть запущено в Telegram для полной функциональности.', 'ai');
             console.warn('Telegram Web App API не доступен. Запустите Web App в Telegram.');
         }
+
+        // Обработчик выбора файла
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Пожалуйста, выберите файл изображения.');
+                    fileInput.value = ''; // Сбросить выбранный файл
+                    selectedFileBase64 = null;
+                    selectedFileMimeType = null;
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedFileBase64 = e.target.result.split(',')[1]; // Берем только base64 часть
+                    selectedFileMimeType = file.type;
+                    addMessage(`Выбран файл: ${file.name} (размер: ${Math.round(file.size / 1024)} KB)`, 'info');
+                    // Можно добавить предпросмотр изображения
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.classList.add('uploaded-image');
+                    // Найти последнее сообщение пользователя или добавить новое, если нужно
+                    const lastUserMessage = messagesDiv.querySelector('.user-message:last-of-type');
+                    if (lastUserMessage) {
+                        lastUserMessage.appendChild(img); // Добавляем изображение к последнему сообщению пользователя
+                    } else {
+                        // Если нет последнего сообщения пользователя, создаем отдельное для изображения
+                        const imgMessage = document.createElement('div');
+                        imgMessage.classList.add('message', 'user-message');
+                        imgMessage.appendChild(img);
+                        messagesDiv.appendChild(imgMessage);
+                    }
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
 
         // Функция для добавления сообщений в чат
         function addMessage(text, sender) {
@@ -132,15 +240,34 @@
         // Функция для отправки сообщения AI
         async function sendMessage() {
             const userMessage = messageInput.value.trim();
-            if (!userMessage) return;
 
-            addMessage(userMessage, 'user');
+            // Проверяем, есть ли текст или файл
+            if (!userMessage && !selectedFileBase64) {
+                alert('Пожалуйста, введите сообщение или выберите файл.');
+                return;
+            }
+
+            addMessage(userMessage || 'Изображение отправлено.', 'user'); // Показываем сообщение пользователя
+
             messageInput.value = ''; // Очищаем поле ввода
+            fileInput.value = ''; // Очищаем выбранный файл в input
+
             messageInput.disabled = true; // Отключаем ввод на время запроса
             const sendButton = document.querySelector('.input-area button');
             sendButton.disabled = true;
+            const fileLabel = document.querySelector('.file-upload-label');
+            fileLabel.style.pointerEvents = 'none'; // Отключаем загрузку файла
 
             addMessage('AI печатает...', 'loading-indicator'); // Индикатор загрузки
+
+            // Подготавливаем данные для отправки
+            const requestBody = {
+                prompt: userMessage
+            };
+            if (selectedFileBase64 && selectedFileMimeType) {
+                requestBody.imageData = selectedFileBase64;
+                requestBody.mimeType = selectedFileMimeType;
+            }
 
             try {
                 const response = await fetch(`${REPLIT_BACKEND_URL}generateContent`, {
@@ -148,7 +275,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ prompt: userMessage })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
@@ -175,12 +302,15 @@
             } finally {
                 messageInput.disabled = false; // Включаем ввод
                 sendButton.disabled = false;
+                fileLabel.style.pointerEvents = 'auto'; // Включаем загрузку файла
+                selectedFileBase64 = null; // Сброс выбранного файла
+                selectedFileMimeType = null;
                 messageInput.focus(); // Возвращаем фокус на поле ввода
             }
         }
 
         // Приветственное сообщение от AI при загрузке Web App
-        addMessage('Привет! Я AI-помощник. Задайте мне вопрос.', 'ai');
+        addMessage('Привет! Я AI-помощник. Задайте мне вопрос или загрузите изображение.', 'ai');
     </script>
 </body>
 </html>
